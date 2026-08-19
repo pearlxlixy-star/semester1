@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fall 2026 Workload Calendar</title>
+<style>
+  :root{
+    --ant214:#4C6EF5; --ant285:#F59F00; --soc301:#7048E8; --soc217:#E64980; --spa201:#12B886;
+    --bg:#faf9f7; --card:#ffffff; --ink:#2b2530; --muted:#8a8290; --line:#ece7e2;
+    --warn:#fff3cd; --warnline:#e8b93a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:var(--bg); color:var(--ink); margin:0; padding:28px 32px 60px;
+    line-height:1.5;
+  }
+  h1{font-size:26px; margin:0 0 4px;}
+  .sub{color:var(--muted); margin:0 0 22px; font-size:14px;}
+  .stats{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:12px; margin-bottom:26px;
+  }
+  .stat{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+  }
+  .stat .num{font-size:24px; font-weight:700;}
+  .stat .lbl{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .legend{
+    display:flex; flex-wrap:wrap; gap:10px 18px; margin-bottom:24px; font-size:13px; align-items:center;
+  }
+  .legend span.dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:middle;}
+  .legend .item{display:flex; align-items:center; color:var(--ink);}
+  .months{display:grid; grid-template-columns:repeat(2, 1fr); gap:22px;}
+  @media (max-width:980px){.months{grid-template-columns:1fr;}}
+  .month{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 16px 10px;}
+  .month h2{font-size:16px; margin:0 0 10px;}
+  .grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .dow{font-size:10.5px; color:var(--muted); text-align:center; padding-bottom:2px; font-weight:600;}
+  .day{
+    min-height:74px; border:1px solid var(--line); border-radius:8px; padding:4px 4px 3px;
+    font-size:10.5px; position:relative; background:#fff;
+  }
+  .day.empty{border:none; background:transparent;}
+  .day.break{background:#f2f2f2; color:#b5b0ac;}
+  .day .dn{font-weight:700; font-size:11px; margin-bottom:2px;}
+  .day.assign{background:var(--warn); border-color:var(--warnline);}
+  .tag{
+    display:inline-block; font-size:9px; font-weight:700; color:#fff; border-radius:4px;
+    padding:1px 3px; margin:0 1px 1px 0; line-height:1.3;
+  }
+  .rd{font-size:11px;}
+  .as{display:block; font-size:9.5px; font-weight:700; margin-top:2px; color:#8a5a00; cursor:help;}
+  .day.study{box-shadow:inset 0 0 0 1px #0aa39a;}
+  .sb{display:block; font-size:8.5px; font-weight:700; margin-top:2px; color:#0a746e; background:#e3f7f5; border-radius:3px; padding:0 2px; cursor:help;}
+  .assess{
+    margin-top:40px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:26px 30px;
+  }
+  .assess h2{margin-top:0;}
+  .assess h3{margin-bottom:6px; font-size:15px;}
+  .periods{margin-bottom:32px;}
+  .periods > h2{margin:0 0 4px;}
+  .periods > .sub{margin:0 0 18px;}
+  table.weekgrid{border-collapse:collapse; width:100%; table-layout:fixed;}
+  table.weekgrid th, table.weekgrid td{border:1px solid var(--line); padding:7px 8px; text-align:left; vertical-align:top; font-size:12px;}
+  table.weekgrid tr.wk-head th{background:#f5f2ef; font-size:11.5px; font-weight:700; color:var(--ink); white-space:nowrap;}
+  table.weekgrid tr.wk-content td{height:1px;}
+  table.weekgrid td.break-cell{background:#f2f2f2;}
+  .item-block{margin-bottom:7px; padding-bottom:6px; border-bottom:1px dashed var(--line); position:relative; padding-left:18px;}
+  .item-block:last-child{margin-bottom:0; padding-bottom:0; border-bottom:none;}
+  .item-block.is-assign{background:var(--warn); margin:0 -8px 7px; padding:5px 8px 6px 26px; border-bottom:none; border-radius:4px;}
+  .item-block .crs{display:inline-block; font-size:9.5px; font-weight:700; color:#fff; border-radius:4px; padding:1px 5px; margin-right:4px;}
+  .item-block .typ{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.02em; color:var(--muted);}
+  .item-block .ttl{display:block; font-weight:700; font-size:12px; margin:2px 0 1px;}
+  .item-block .dsc{display:block; color:var(--muted); font-size:11px;}
+  .item-block .due{display:block; color:#8a5a00; font-size:10.5px; font-weight:600; margin-top:2px;}
+  .item-block .chk{position:absolute; left:0; top:2px; margin:0; cursor:pointer; width:13px; height:13px;}
+  .item-block.is-assign .chk{left:8px;}
+  .item-block.done{opacity:.5;}
+  .item-block.done .ttl{text-decoration:line-through;}
+  .progress-wrap{display:flex; align-items:center; gap:10px; margin:0 0 18px; font-size:12.5px; color:var(--muted);}
+  .progress-bar{flex:1; max-width:280px; height:8px; background:#ece7e2; border-radius:5px; overflow:hidden;}
+  .progress-bar > div{height:100%; background:#0aa39a; width:0%; transition:width .2s;}
+  .progress-note{font-size:11.5px; color:var(--muted); font-style:italic; margin:0 0 16px;}
+  .crunch{
+    background:#fff3cd; border:1px solid var(--warnline); border-radius:10px; padding:12px 16px; margin:10px 0;
+    font-size:14px;
+  }
+  .crunch b{display:block; margin-bottom:3px;}
+  table.load{border-collapse:collapse; width:100%; margin:14px 0; font-size:13.5px;}
+  table.load th, table.load td{border:1px solid var(--line); padding:7px 10px; text-align:left;}
+  table.load th{background:#f5f2ef;}
+  footer{margin-top:24px; color:var(--muted); font-size:12px;}
+
+  .gradecalc{margin-top:40px;}
+  .gradecalc > h2{margin:0 0 4px;}
+  .gc-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(360px,1fr)); gap:16px; margin-top:18px;}
+  .gc-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px 20px;}
+  .gc-card h3{margin:0 0 10px; font-size:15.5px;}
+  table.gc{border-collapse:collapse; width:100%; font-size:12.5px;}
+  table.gc th, table.gc td{border:1px solid var(--line); padding:6px 8px; text-align:left;}
+  table.gc th{background:#f5f2ef; font-size:11px; text-transform:uppercase; color:var(--muted);}
+  table.gc td.wcol{white-space:nowrap; text-align:center; color:var(--muted); font-size:12px;}
+  table.gc input.score{width:56px; padding:3px 5px; border:1px solid var(--line); border-radius:5px; font-size:12.5px; text-align:center;}
+  .gc-summary{margin-top:12px; font-size:13px; line-height:1.7;}
+  .gc-summary .grade-big{font-size:22px; font-weight:700; color:var(--ink);}
+  .gc-summary .letter{display:inline-block; margin-left:8px; padding:2px 9px; border-radius:6px; font-weight:700; font-size:13px; background:#e3f7f5; color:#0a746e;}
+  .gc-overall{margin-top:18px;}
+  table.gc-overall{border-collapse:collapse; width:100%; font-size:13px;}
+  table.gc-overall th, table.gc-overall td{border:1px solid var(--line); padding:8px 10px; text-align:left;}
+  table.gc-overall th{background:#f5f2ef;}
+</style>
+</head>
+<body>
+
+<h1>Fall 2026 Semester — Workload Calendar</h1>
+<p class="sub">18 Aug – 28 Nov 2026 · 5 courses · generated from your synced Google Calendar & Notion syllabus data</p>
+<p id="syncStatus" style="font-size:12.5px; color:var(--muted); margin:-14px 0 20px;">⏳ Connecting to sync…</p>
+
+<div class="stats" id="stats"></div>
+
+<div class="legend">
+  <span class="item"><span class="dot" style="background:var(--ant214)"></span>SOC/ANT 214</span>
+  <span class="item"><span class="dot" style="background:var(--ant285)"></span>ANT 285/SOC 212</span>
+  <span class="item"><span class="dot" style="background:var(--soc301)"></span>SOC 301</span>
+  <span class="item"><span class="dot" style="background:var(--soc217)"></span>SOC 217</span>
+  <span class="item"><span class="dot" style="background:var(--spa201)"></span>SPA 201</span>
+  <span class="item">📖 = reading due</span>
+  <span class="item"><span style="background:var(--warn); border:1px solid var(--warnline); padding:1px 6px; border-radius:4px;">yellow cell</span>&nbsp;= assignment/exam due</span>
+  <span class="item"><span style="background:#e3f7f5; border:1px solid #0aa39a; padding:1px 6px; border-radius:4px; color:#0a746e;">📚 teal</span>&nbsp;= reading block (Sun/Tue only — hover for texts)</span>
+  <span class="item"><span style="background:#f2f2f2; padding:1px 6px; border-radius:4px; color:#b5b0ac;">grey</span>&nbsp;= Fall Break</span>
+</div>
+
+<div class="periods">
+  <h2>Readings &amp; assignments, week by week</h2>
+  <p class="sub">Every mandatory reading and every graded assignment/exam this semester, one row per week (Mon–Sun). Each entry shows the course, type, a short description from the syllabus, and the due date. Check items off as you go.</p>
+  <div class="progress-wrap">
+    <span id="progressText">0 / 96 checked off</span>
+    <div class="progress-bar"><div id="progressFill"></div></div>
+  </div>
+  <p class="progress-note" id="progressNote">Progress syncs live across every device that opens this page (see the status line up top). Falls back to saving only on this browser if you're offline or sync is unavailable.</p>
+  <table class="weekgrid" id="weekGrid"></table>
+</div>
+
+<div class="months" id="months"></div>
+
+<div class="assess">
+  <h2>Your reading schedule</h2>
+  <p>28 dedicated reading blocks (teal 📚 tags above, hover any for the exact texts) are placed on <b>Sundays</b> (prepping for the Tuesday-due readings) and <b>Tuesday evenings, 18:00 onward</b> (prepping for the Thursday-due readings, timed to start right after SOC 217 lecture ends) — sized 45 min to 1h45 depending on how many readings land that day. These slots were chosen specifically to stay clear of your fixed commitments:</p>
+  <table class="load">
+    <tr><th>Commitment</th><th>When</th><th>How the schedule avoids it</th></tr>
+    <tr><td>SMM content work (filming, editing, everything that needs posting)</td><td>Fridays</td><td>No reading blocks are ever placed on a Friday</td></tr>
+    <tr><td>Club #1 — regular meeting</td><td>Wednesdays, 6:00pm</td><td>No reading blocks touch Wednesdays at all</td></tr>
+    <tr><td>Club #2 — regular meeting</td><td>Saturdays, time TBD</td><td>No reading blocks touch Saturdays at all</td></tr>
+    <tr><td>SOC 217 class (Tue lecture / Thu seminar)</td><td>16:30–17:45</td><td>Tuesday reading block now starts 18:00, after class ends, instead of overlapping it</td></tr>
+  </table>
+  <p style="font-size:13.5px; color:var(--muted);">This leaves Sunday and Tuesday evening as your two reading anchors, plus Monday/Wednesday daytime and Thursday evening as open slack if a heavy week runs long. Once Saturday's club time is confirmed, let me know and I'll double-check nothing was assumed into that window.</p>
+</div>
+
+<div class="assess">
+  <h2>Workload assessment</h2>
+
+  <h3>What's actually on your plate this term</h3>
+  <table class="load">
+    <tr><th>Course</th><th>Class sessions</th><th>Weekly contact hrs</th><th>Mandatory readings</th><th>Graded deliverables</th></tr>
+    <tr><td>SOC/ANT 214 — Qualitative Methods</td><td>26 (Tue/Thu, 75 min)</td><td>2.5h</td><td>12</td><td>5 (proposal, discussion, analysis, presentation, final report)</td></tr>
+    <tr><td>ANT 285/SOC 212 — Food & Society</td><td>26 (Tue/Thu, 75 min)</td><td>2.5h</td><td>14</td><td>4 (participation, midterm, in-class writing ×many, final exam)</td></tr>
+    <tr><td>SOC 301 — Classical Sociological Theory</td><td>26 (Tue/Thu, 75 min)</td><td>2.5h</td><td>24</td><td>5 (participation, quiz ×2, presentation, final test)</td></tr>
+    <tr><td>SOC 217 — Sociology of Family</td><td>26 (Tue/Thu, 16:30–17:45)</td><td>2.5h</td><td>24</td><td>6 (engagement, essay plan, mini-exam ×2, presentation, final essay)</td></tr>
+    <tr><td>SPA 201 — Spanish</td><td>56 (Mon–Thu, 50 min)</td><td>3.3h</td><td>0</td><td>5 (participation, presentation, midterm ×2, oral midterm)</td></tr>
+    <tr><td><b>Total</b></td><td><b>~162 sessions</b></td><td><b>~13.3h/week</b></td><td><b>74 reading assignments</b></td><td><b>25 graded categories</b></td></tr>
+  </table>
+  <p style="font-size:13.5px; color:var(--muted); margin-top:-4px;">SOC 217's meeting time (16:30–17:45, Tue/Thu) is now confirmed and on the calendar; room still isn't specified anywhere in the syllabus. The "25 graded categories" above includes ongoing ones with no single due date (participation, in-class writing); the calendar's "22" stat card counts only the ones tied to a specific date/window.</p>
+
+  <h3>The honest read</h3>
+  <p>13.3 hours/week of class time isn't heavy on its own. What makes this semester demanding is <b>four reading-and-discussion-based courses running in parallel</b> — 214, 285, 301, and 217 are all discussion/seminar format, meaning showing up unprepared isn't really an option the way it might be for a lecture-only course. 74 separate reading assignments over roughly 14 active weeks averages out to <b>5–6 readings due every week</b>, several of them full book chapters, not just articles — SOC 301 and SOC 217 alone are 24 each. Realistically, budget 10–15 hours/week just for reading and reading-response prep across those four courses, on top of the 13.3 hours in class.</p>
+  <p>Layer in <b>3 student clubs</b> (even at a modest 2–3h/week each, that's 6–9h/week) and <b>2 social-media-manager jobs</b> (SMM work is rarely fixed-hours — content calendars, posting, engagement, and client check-ins usually run 8–15h/week per client/brand, so 16–30h/week combined is realistic), and you're looking at a total weekly load in the range of <b>48–68+ hours</b> once class, reading, clubs, and both jobs are added together. That's before factoring in the actual writing time for essays, the study time for quizzes/midterms, or the group-coordination overhead for the SOC 301, SOC 217, and SOC/ANT 214 group work — all three of those courses have you working with partners, which adds scheduling friction clubs and solo work don't have.</p>
+  <p>This is workable, but only if the readings get triaged (mandatory vs. optional — most syllabi mark this clearly) and the club/job hours flex around the crunch weeks below rather than staying fixed. If both jobs are close to full 15h/week each on top of everything else, something will have to give during the weeks flagged below.</p>
+
+  <h3>Where it actually piles up</h3>
+  <div class="crunch"><b>⚠️ Sep 14–20 — first real deadline cluster</b>Research Design Proposal (SOC/ANT 214, 20%) on the 14th, then Essay Plan (SOC 217, 20%) and CITI Ethics Training due within the same week ending the 20th. All group-coordinated except CITI.</div>
+  <div class="crunch"><b>⚠️ Sep 28 – Oct 2 — triple collision</b>SOC 217 Mini-exam I and SOC 301 Quiz 1 both fall in this week (exact days unconfirmed), and SOC/ANT 214's Interview & Observation Analysis (20%) is due Oct 2 right after. Three courses demanding output in a 5-day window.</div>
+  <div class="crunch"><b>⚠️⚠️ Nov 9–13 — the worst week of the semester</b>SOC/ANT 214 Final Research Report (30%, 5,000 words) due Nov 9, SOC 217 Mini-exam II the same week, SOC/ANT 214 presentations starting Nov 10, and SPA 201's 2nd Midterm Nov 12–13. Four courses demanding major output simultaneously — start the final report well before Nov 9.</div>
+  <div class="crunch"><b>⚠️ Nov 17–28 — the closing stretch</b>SOC 217 presentations (17th–26th) overlap SPA 201's Oral Midterm (18th–21st), then SOC 301's Final Test (26th) and SOC 217's Final Essay (28th, 3,000–4,500 words) land within two days of each other to close out the term.</div>
+
+  <h3>Suggestions</h3>
+  <p>Block the reading time as fixed calendar slots the same way class time is fixed — with four discussion-based courses, "I'll read it later" compounds fast. Ask each club whether attendance is flexible around exam weeks; most are. For the two SMM jobs, batch content creation early in the week (e.g., Sunday/Monday) so posting and light engagement — the lower-effort parts — can absorb the high-academic-load weeks flagged above. And treat Nov 9–13 as a protected week: nothing club- or job-related that can move should be scheduled then.</p>
+</div>
+
+<div class="gradecalc">
+  <h2>🧮 Grade calculator</h2>
+  <p class="sub">Weights below are pulled directly from each syllabus's grading breakdown. Enter your score (%) for anything that's been graded — the rest is left blank until you have it. Nothing here saves between visits (no persistent storage in a static file), so re-enter your scores each time you open this.</p>
+  <div class="gc-grid" id="gcGrid"></div>
+  <div class="gc-overall">
+    <h3 style="margin-bottom:8px; font-size:15px;">Overall snapshot</h3>
+    <table class="gc-overall" id="gcOverall"></table>
+  </div>
+</div>
+
+<footer>Reading and assignment data pulled from the syllabi you shared; class-time recurrence computed from your Google Calendar. SOC 217's meeting time and ANT 285's final exam date are still unconfirmed.</footer>
+
+<script>
+const COURSES = {
+  ant214:{name:'214', full:'SOC/ANT 214', color:'var(--ant214)'},
+  ant285:{name:'285', full:'ANT285/SOC212', color:'var(--ant285)'},
+  soc301:{name:'301', full:'SOC 301', color:'var(--soc301)'},
+  soc217:{name:'217', full:'SOC 217', color:'var(--soc217)'},
+  spa201:{name:'SPA', full:'SPA 201', color:'var(--spa201)'},
+};
+
+// weekly recurring class patterns: [dow...] 0=Sun..6=Sat, start/end inclusive, exclude dates
+const PATTERNS = [
+  {course:'ant214', days:[2,4], start:'2026-08-18', end:'2026-11-19', exclude:['2026-10-06','2026-10-08']},
+  {course:'ant285', days:[2,4], start:'2026-08-18', end:'2026-11-19', exclude:['2026-10-06','2026-10-08']},
+  {course:'soc301', days:[2,4], start:'2026-08-18', end:'2026-11-19', exclude:['2026-10-06','2026-10-08']},
+  {course:'soc217', days:[2,4], start:'2026-08-18', end:'2026-11-26', exclude:['2026-10-06','2026-10-08']},
+  {course:'spa201', days:[1,2,3,4], start:'2026-08-17', end:'2026-11-26', exclude:['2026-10-05','2026-10-06','2026-10-07','2026-10-08']},
+];
+
+const BREAK_DAYS = ['2026-10-05','2026-10-06','2026-10-07','2026-10-08','2026-10-09','2026-10-10','2026-10-11'];
+
+const READINGS = [
+["2026-08-20","ant214","M&T Ch.1"],["2026-08-25","ant214","M&T Ch.2"],["2026-08-27","ant214","M&T Ch.4"],
+["2026-09-01","ant214","M&T Ch.5"],["2026-09-08","ant214","M&T Ch.6"],["2026-09-15","ant214","Belmont Report + CITI"],
+["2026-09-29","ant214","M&T Ch.8"],["2026-10-20","ant214","M&T Ch.10"],["2026-10-27","ant214","Dalsgaard — FB Ethnography"],
+["2026-11-03","ant214","Lapenta — Photo-Elicitation"],["2026-11-24","ant214","Dubuisson Ch.1"],["2026-11-26","ant214","Liu Ch.4"],
+["2026-08-18","ant285","W Intro+Ch1, COL Intro"],["2026-08-25","ant285","W Ch2, COL Ch1, CVEJ Pref-Intro"],
+["2026-09-01","ant285","W Ch3&4, COL Ch2&3"],["2026-09-08","ant285","W Ch5&6, CVEJ Ch1-3"],
+["2026-09-15","ant285","W Ch7,8,Epi, COL Ch4, CVEJ Ch6-8"],["2026-09-22","ant285","COL Ch5, CVEJ Ch9,10,12"],
+["2026-09-29","ant285","COL Ch5&6, CVEJ Ch13,14,17"],["2026-10-13","ant285","COL Ch9&10, CVEJ Ch24&25 (midterm wk)"],
+["2026-10-20","ant285","COL Ch11&12, CVEJ Ch26&27"],["2026-10-27","ant285","CVEJ Ch28&29"],
+["2026-11-03","ant285","CVEJ Ch29-31"],["2026-11-10","ant285","CVEJ Ch33&34"],["2026-11-17","ant285","Finish CVEJ"],
+["2026-11-24","ant285","Review + supplementary"],
+["2026-08-18","soc301","Ibn Khaldun — Muqaddimah"],["2026-08-20","soc301","Spencer — Principles"],
+["2026-08-25","soc301","Marx — Capital sel."],["2026-08-27","soc301","Marx/Engels — Manifesto+Ideology"],
+["2026-09-01","soc301","Engels — Origin of Family"],["2026-09-08","soc301","Durkheim — Division+Suicide"],
+["2026-09-10","soc301","Durkheim — Elementary Forms"],["2026-09-15","soc301","Weber — Protestant Ethic+Religions"],
+["2026-09-17","soc301","Weber — Class,Status,Party"],["2026-09-22","soc301","Weber — Bureaucracy+Domination"],
+["2026-09-29","soc301","Simmel — Fashion ⚠️Quiz1?"],["2026-10-01","soc301","Simmel — Metropolis"],
+["2026-10-13","soc301","Veblen — Leisure Class"],["2026-10-15","soc301","Du Bois — Philadelphia Negro+Souls"],
+["2026-10-20","soc301","Cooley&Mead — Pragmatism"],["2026-10-22","soc301","Blumer — Symbolic Interactionism"],
+["2026-10-27","soc301","Parsons — Social Action"],["2026-11-03","soc301","Goffman — Symbols ⚠️Quiz2"],
+["2026-11-05","soc301","Goffman — Deference&Demeanor"],["2026-11-10","soc301","Bourdieu — Forms of Capital"],
+["2026-11-12","soc301","Bourdieu — Love of Art"],["2026-11-17","soc301","Wallerstein — World Capitalist"],
+["2026-11-19","soc301","Wallerstein — Peoplehood"],["2026-11-24","soc301","Connell — Why Classical"],
+["2026-08-18","soc217","Lecture: Ciabattari Ch1-2"],["2026-08-20","soc217","Seminar: Therborn; UN Women"],
+["2026-08-25","soc217","Lecture: Ciabattari Ch2-3"],["2026-08-27","soc217","Seminar: Konietzka; Morgan"],
+["2026-09-01","soc217","Lecture: Ciabattari Ch3"],["2026-09-03","soc217","Seminar: Coelho; Freeman"],
+["2026-09-08","soc217","Lecture: Ciabattari Ch7&4"],["2026-09-10","soc217","Seminar: Nilsen; Policarpo"],
+["2026-09-15","soc217","Lecture: Ciabattari Ch5-6"],["2026-09-17","soc217","Seminar: Chantler; Michelson; Nemoto"],
+["2026-09-22","soc217","Lecture: Ciabattari Ch8"],["2026-09-24","soc217","Seminar: Harman; Nakazato; UN Women Ch5"],
+["2026-09-29","soc217","Lecture: Ciabattari Ch9 ⚠️Mini-exam I wk"],["2026-10-01","soc217","Seminar: Ocobock ⚠️Mini-exam I wk"],
+["2026-10-13","soc217","Lecture: Ciabattari Ch10"],["2026-10-15","soc217","Seminar: Hämäläinen; Powell"],
+["2026-10-20","soc217","Lecture: Ciabattari Ch11"],["2026-10-22","soc217","Seminar: Akhmetova; Moore"],
+["2026-10-27","soc217","Lecture: Beck; Merla"],["2026-10-29","soc217","Seminar: Jiao; Nazareno"],
+["2026-11-03","soc217","Lecture: Passet-Wittig; Kotowska"],["2026-11-05","soc217","Seminar: Bower-Brown; Brinton; Jana"],
+["2026-11-10","soc217","Lecture: Ciabattari Ch12 ⚠️Mini-exam II wk"],["2026-11-12","soc217","Seminar: Eggers ⚠️Mini-exam II wk"],
+];
+
+const ASSIGN = [
+["2026-09-14","2026-09-14","ant214","Research Design Proposal — 20%","Written proposal covering your research question, sample/recruitment plan, interview guide, observation plan, and ethics. Feedback & grade returned by Oct 2."],
+["2026-09-20","2026-09-20","ant214","CITI Training due","Mandatory: complete the CITI research-ethics program online and upload your completion certificate to Moodle. Required to stay eligible to do your project."],
+["2026-10-02","2026-10-02","ant214","Interview & Obs. Analysis — 20%","Based on 1 interview + 1 observation you conduct: initial codes, a table of themes, and ~500 words of preliminary analysis. Feedback & grade returned by Oct 12."],
+["2026-11-09","2026-11-09","ant214","Final Research Report — 30%","The big one: 5,000 words (±10%) covering intro/question, methodology, data (5+ interviews, 5+ observations), and discussion with 3+ academic sources."],
+["2026-11-10","2026-11-19","ant214","Project Presentations — 15%","In-class presentation of your research project, spread across regular sessions Nov 10, 12, 17 & 19. Confirm your exact presenting date with the instructor."],
+["2026-10-13","2026-10-15","ant285","Midterm Exam — 20% ⚠️","Syllabus says 'Oct 13 and 15 — MIDTERM' without saying which day is the actual exam vs. review — confirm with Prof. Zanca which session it's on."],
+["2026-09-03","2026-09-03","soc301","Group Presentation opt.1 — 15%","First of 3 possible presentation sessions — 'Marxism in XX century' theme. Choose one of 3 texts (Hessen, Adorno & Horkheimer, or Wright/Hochschild) to present."],
+["2026-09-24","2026-09-24","soc301","Group Presentation opt.2 — 15%","Second of 3 possible sessions — 'Weber in XX century' theme. Choose one of 3 texts (Shils, Bendix, or Starr) to present."],
+["2026-09-29","2026-09-29","soc301","Quiz 1 — 20% ⚠️","Closed-book, pen & paper, in class — no electronics. Two date conflicts in the syllabus (intro text/table say Sep 19, a Saturday; lecture outline says Sep 29) — went with Sep 29 as the plausible one."],
+["2026-10-29","2026-10-29","soc301","Group Presentation opt.3 — 15%","Third of 3 possible sessions — 'Applying Parsons' theme. Choose one of 3 texts (Eisenstadt, Davis & Moore, or Merton) to present. You only present once, on one of the three dates."],
+["2026-11-03","2026-11-03","soc301","Quiz 2 — 20%","Closed-book, pen & paper, in class — no electronics. Date is consistent across the whole syllabus, no conflict."],
+["2026-11-26","2026-11-26","soc301","Final Test — 35%","Comprehensive, closed-book, closed-note, pen & paper — covers every assigned reading for the semester. The single biggest grade in this course."],
+["2026-09-02","2026-09-02","soc217","Essay Project due","Ungraded milestone (feeds into your Essay Plan grade): with your group, settle on topic, theory, and method for the family-issue essay. Due 23:59, discussed in Week 3 class."],
+["2026-09-20","2026-09-20","soc217","Essay Plan — 20%","Group work (pairs/groups of 3), 1200–1600 words excluding references: topic, aim, theoretical framework, methodology, and a working argument. Due 23:59 via Turnitin."],
+["2026-09-29","2026-10-01","soc217","Mini-exam I — 15% ⚠️","In-class, 60 minutes, mostly multiple choice + one open-ended question. Syllabus only specifies 'Week 7' — exact day (lecture Tue vs. seminar Thu) unconfirmed."],
+["2026-11-10","2026-11-12","soc217","Mini-exam II — 15% ⚠️","Same format as Mini-exam I. Syllabus only specifies 'Week 13' — exact day unconfirmed."],
+["2026-11-17","2026-11-26","soc217","Presentations — 10%","In-class presentation of your group's essay findings (format of your choosing — slides, poster, video) plus a live Q&A, spread across Weeks 14–15 sessions."],
+["2026-11-28","2026-11-28","soc217","Final Essay — 25%","Group essay, 3000–4500 words + references, building on your essay plan and presentation feedback. Due Friday 23:59 via Turnitin."],
+["2026-09-11","2026-09-12","spa201","1st Presentation — 20%","Present your assigned project topic to the class; the teacher asks follow-up questions afterward. Exact day depends on your section."],
+["2026-09-25","2026-09-26","spa201","1st Midterm — 20%","Covers speaking, listening, reading, writing, and grammar/vocabulary. Exact day depends on your section."],
+["2026-11-12","2026-11-13","spa201","2nd Midterm — 20%","Same format as the 1st midterm — speaking, listening, reading, writing, grammar/vocabulary. Exact day depends on your section."],
+["2026-11-18","2026-11-21","spa201","Oral Midterm — 20%","Oral exam covering the whole semester's content. 4-day window — exact day depends on your section."],
+];
+
+const STUDY = [
+{date:"2026-08-16",start:"10:00",end:"11:45",due:"2026-08-18",items:[["ant285","W Intro+Ch1, COL Intro"],["soc301","Ibn Khaldun — Muqaddimah"],["soc217","Lecture: Ciabattari Ch1-2"]]},
+{date:"2026-08-18",start:"18:00",end:"19:45",due:"2026-08-20",items:[["ant214","M&T Ch.1"],["soc301","Spencer — Principles"],["soc217","Seminar: Therborn; UN Women"]]},
+{date:"2026-08-23",start:"10:00",end:"12:15",due:"2026-08-25",items:[["ant214","M&T Ch.2"],["ant285","W Ch2, COL Ch1, CVEJ Pref-Intro"],["soc301","Marx — Capital sel."],["soc217","Lecture: Ciabattari Ch2-3"]]},
+{date:"2026-08-25",start:"18:00",end:"19:45",due:"2026-08-27",items:[["ant214","M&T Ch.4"],["soc301","Marx/Engels — Manifesto+Ideology"],["soc217","Seminar: Konietzka; Morgan"]]},
+{date:"2026-08-30",start:"10:00",end:"12:15",due:"2026-09-01",items:[["ant214","M&T Ch.5"],["ant285","W Ch3&4, COL Ch2&3"],["soc301","Engels — Origin of Family"],["soc217","Lecture: Ciabattari Ch3"]]},
+{date:"2026-09-01",start:"18:00",end:"18:45",due:"2026-09-03",items:[["soc217","Seminar: Coelho; Freeman"]]},
+{date:"2026-09-06",start:"10:00",end:"12:15",due:"2026-09-08",items:[["ant214","M&T Ch.6"],["ant285","W Ch5&6, CVEJ Ch1-3"],["soc301","Durkheim — Division+Suicide"],["soc217","Lecture: Ciabattari Ch7&4"]]},
+{date:"2026-09-08",start:"18:00",end:"19:15",due:"2026-09-10",items:[["soc301","Durkheim — Elementary Forms"],["soc217","Seminar: Nilsen; Policarpo"]]},
+{date:"2026-09-13",start:"10:00",end:"12:15",due:"2026-09-15",items:[["ant214","Belmont Report + CITI"],["ant285","W Ch7,8,Epi, COL Ch4, CVEJ Ch6-8"],["soc301","Weber — Protestant Ethic+Religions"],["soc217","Lecture: Ciabattari Ch5-6"]]},
+{date:"2026-09-15",start:"18:00",end:"19:15",due:"2026-09-17",items:[["soc301","Weber — Class,Status,Party"],["soc217","Seminar: Chantler; Michelson; Nemoto"]]},
+{date:"2026-09-20",start:"10:00",end:"11:45",due:"2026-09-22",items:[["ant285","COL Ch5, CVEJ Ch9,10,12"],["soc301","Weber — Bureaucracy+Domination"],["soc217","Lecture: Ciabattari Ch8"]]},
+{date:"2026-09-22",start:"18:00",end:"18:45",due:"2026-09-24",items:[["soc217","Seminar: Harman; Nakazato; UN Women Ch5"]]},
+{date:"2026-09-27",start:"10:00",end:"12:15",due:"2026-09-29",items:[["ant214","M&T Ch.8"],["ant285","COL Ch5&6, CVEJ Ch13,14,17"],["soc301","Simmel — Fashion ⚠️Quiz1?"],["soc217","Lecture: Ciabattari Ch9 ⚠️Mini-exam I wk"]]},
+{date:"2026-09-29",start:"18:00",end:"19:15",due:"2026-10-01",items:[["soc301","Simmel — Metropolis"],["soc217","Seminar: Ocobock ⚠️Mini-exam I wk"]]},
+{date:"2026-10-11",start:"10:00",end:"11:45",due:"2026-10-13",items:[["ant285","COL Ch9&10, CVEJ Ch24&25 (midterm wk)"],["soc301","Veblen — Leisure Class"],["soc217","Lecture: Ciabattari Ch10"]]},
+{date:"2026-10-13",start:"18:00",end:"19:15",due:"2026-10-15",items:[["soc301","Du Bois — Philadelphia Negro+Souls"],["soc217","Seminar: Hämäläinen; Powell"]]},
+{date:"2026-10-18",start:"10:00",end:"12:15",due:"2026-10-20",items:[["ant214","M&T Ch.10"],["ant285","COL Ch11&12, CVEJ Ch26&27"],["soc301","Cooley&Mead — Pragmatism"],["soc217","Lecture: Ciabattari Ch11"]]},
+{date:"2026-10-20",start:"18:00",end:"19:15",due:"2026-10-22",items:[["soc301","Blumer — Symbolic Interactionism"],["soc217","Seminar: Akhmetova; Moore"]]},
+{date:"2026-10-25",start:"10:00",end:"12:15",due:"2026-10-27",items:[["ant214","Dalsgaard — FB Ethnography"],["ant285","CVEJ Ch28&29"],["soc301","Parsons — Social Action"],["soc217","Lecture: Beck; Merla"]]},
+{date:"2026-10-27",start:"18:00",end:"18:45",due:"2026-10-29",items:[["soc217","Seminar: Jiao; Nazareno"]]},
+{date:"2026-11-01",start:"10:00",end:"12:15",due:"2026-11-03",items:[["ant214","Lapenta — Photo-Elicitation"],["ant285","CVEJ Ch29-31"],["soc301","Goffman — Symbols ⚠️Quiz2"],["soc217","Lecture: Passet-Wittig; Kotowska"]]},
+{date:"2026-11-03",start:"18:00",end:"19:15",due:"2026-11-05",items:[["soc301","Goffman — Deference&Demeanor"],["soc217","Seminar: Bower-Brown; Brinton; Jana"]]},
+{date:"2026-11-08",start:"10:00",end:"11:45",due:"2026-11-10",items:[["ant285","CVEJ Ch33&34"],["soc301","Bourdieu — Forms of Capital"],["soc217","Lecture: Ciabattari Ch12 ⚠️Mini-exam II wk"]]},
+{date:"2026-11-10",start:"18:00",end:"19:15",due:"2026-11-12",items:[["soc301","Bourdieu — Love of Art"],["soc217","Seminar: Eggers ⚠️Mini-exam II wk"]]},
+{date:"2026-11-15",start:"10:00",end:"11:15",due:"2026-11-17",items:[["ant285","Finish CVEJ"],["soc301","Wallerstein — World Capitalist"]]},
+{date:"2026-11-17",start:"18:00",end:"18:45",due:"2026-11-19",items:[["soc301","Wallerstein — Peoplehood"]]},
+{date:"2026-11-22",start:"10:00",end:"11:45",due:"2026-11-24",items:[["ant214","Dubuisson Ch.1"],["ant285","Review + supplementary"],["soc301","Connell — Why Classical"]]},
+{date:"2026-11-24",start:"18:00",end:"18:45",due:"2026-11-26",items:[["ant214","Liu Ch.4"]]}
+];
+
+function dstr(d){return d.toISOString().slice(0,10);}
+function inRange(dateStr, start, end){return dateStr>=start && dateStr<=end;}
+
+function classesOn(dateStr){
+  const d = new Date(dateStr+'T00:00:00Z');
+  const dow = d.getUTCDay();
+  return PATTERNS.filter(p => p.days.includes(dow) && inRange(dateStr,p.start,p.end) && !p.exclude.includes(dateStr))
+                 .map(p=>p.course);
+}
+
+// --- Readings & assignments, week-by-week grid (Mon–Sun columns, like a content calendar) ---
+function fmtShort(dateStr){
+  const d = new Date(dateStr+'T00:00:00Z');
+  return d.toLocaleDateString('en-US',{month:'short', day:'numeric', timeZone:'UTC'});
+}
+function fmtRange(start,end){
+  return start===end ? fmtShort(start) : fmtShort(start)+'–'+fmtShort(end);
+}
+function fmtWeekday(dateStr){
+  return new Date(dateStr+'T00:00:00Z').toLocaleDateString('en-US',{weekday:'short', timeZone:'UTC'});
+}
+function shortDesc(text, maxLen){
+  if(!text) return '';
+  if(text.length<=maxLen) return text;
+  const period = text.slice(0, maxLen).lastIndexOf('. ');
+  if(period > 30) return text.slice(0, period+1);
+  const space = text.slice(0, maxLen).lastIndexOf(' ');
+  return text.slice(0, space>30?space:maxLen) + '…';
+}
+
+const WEEK_START = '2026-08-17'; // Monday, Week 1
+const N_WEEKS = 15;
+const weekGrid = document.getElementById('weekGrid');
+
+for(let w=0; w<N_WEEKS; w++){
+  const monday = new Date(WEEK_START+'T00:00:00Z');
+  monday.setUTCDate(monday.getUTCDate() + w*7);
+  const weekDates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(monday); d.setUTCDate(d.getUTCDate()+i);
+    weekDates.push(dstr(d));
+  }
+
+  const headRow = document.createElement('tr'); headRow.className='wk-head';
+  weekDates.forEach(ds=>{
+    const th = document.createElement('th');
+    th.textContent = fmtWeekday(ds)+' '+fmtShort(ds);
+    if(BREAK_DAYS.includes(ds)) th.classList.add('break-cell');
+    headRow.appendChild(th);
+  });
+  weekGrid.appendChild(headRow);
+
+  const contentRow = document.createElement('tr'); contentRow.className='wk-content';
+  weekDates.forEach(ds=>{
+    const td = document.createElement('td');
+    if(BREAK_DAYS.includes(ds)) td.classList.add('break-cell');
+
+    READINGS.forEach((r,i)=>{
+      if(r[0]!==ds) return;
+      const crs = COURSES[r[1]];
+      const block = document.createElement('div'); block.className='item-block'; block.id='rblock-'+i;
+      block.innerHTML = `<input type="checkbox" class="chk" id="rchk-${i}" onchange="toggleItem('read',${i},this)">`
+        + `<span class="crs" style="background:${crs.color}">${crs.name}</span><span class="typ">Reading</span>`
+        + `<span class="ttl">${r[2]}</span>`
+        + `<span class="due">Due ${fmtWeekday(ds)} ${fmtShort(ds)} (${crs.full} class)</span>`;
+      td.appendChild(block);
+    });
+
+    ASSIGN.forEach((a,i)=>{
+      if(a[0]!==ds) return;
+      const crs = COURSES[a[2]];
+      const block = document.createElement('div'); block.className='item-block is-assign'; block.id='ablock-'+i;
+      block.innerHTML = `<input type="checkbox" class="chk" id="achk-${i}" onchange="toggleItem('assign',${i},this)">`
+        + `<span class="crs" style="background:${crs.color}">${crs.name}</span><span class="typ">Assignment</span>`
+        + `<span class="ttl">${a[3]}</span>`
+        + (a[4]? `<span class="dsc">${shortDesc(a[4],130)}</span>` : '')
+        + `<span class="due">Due ${fmtRange(a[0],a[1])}</span>`;
+      td.appendChild(block);
+    });
+
+    if(!td.childElementCount){ td.innerHTML = '&nbsp;'; }
+    contentRow.appendChild(td);
+  });
+  weekGrid.appendChild(contentRow);
+}
+
+// --- checkbox progress tracking, saved to localStorage so it survives a reload ---
+const readDone = new Set();
+const assignDone = new Set();
+const TOTAL_ITEMS = READINGS.length + ASSIGN.length;
+const LS_KEY = 'fall2026WorkloadCalendar'; // change this if you duplicate the file for a different semester
+
+function lsAvailable(){
+  try{ const k='__t'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+  catch(e){ return false; }
+}
+const STORAGE_OK = lsAvailable();
+
+function saveProgress(){
+  if(!STORAGE_OK) return;
+  localStorage.setItem(LS_KEY+'_readDone', JSON.stringify([...readDone]));
+  localStorage.setItem(LS_KEY+'_assignDone', JSON.stringify([...assignDone]));
+}
+
+function loadProgress(){
+  if(!STORAGE_OK) return;
+  try{
+    const r = JSON.parse(localStorage.getItem(LS_KEY+'_readDone') || '[]');
+    const a = JSON.parse(localStorage.getItem(LS_KEY+'_assignDone') || '[]');
+    r.forEach(idx=>{
+      readDone.add(idx);
+      const cb = document.getElementById('rchk-'+idx);
+      const block = document.getElementById('rblock-'+idx);
+      if(cb) cb.checked = true;
+      if(block) block.classList.add('done');
+    });
+    a.forEach(idx=>{
+      assignDone.add(idx);
+      const cb = document.getElementById('achk-'+idx);
+      const block = document.getElementById('ablock-'+idx);
+      if(cb) cb.checked = true;
+      if(block) block.classList.add('done');
+    });
+  }catch(e){ /* corrupt/old data — ignore and start fresh */ }
+}
+
+function toggleItem(kind, idx, el){
+  const set = kind==='read' ? readDone : assignDone;
+  const blockId = (kind==='read'?'rblock-':'ablock-')+idx;
+  const block = document.getElementById(blockId);
+  if(el.checked){ set.add(idx); block.classList.add('done'); }
+  else { set.delete(idx); block.classList.remove('done'); }
+  saveProgress();
+  updateProgress();
+  if(window.fbSetProgress) window.fbSetProgress(kind, idx, el.checked); // pushes to every other open device
+}
+
+function updateProgress(){
+  const done = readDone.size + assignDone.size;
+  const pct = TOTAL_ITEMS? Math.round(done/TOTAL_ITEMS*100) : 0;
+  document.getElementById('progressText').textContent = `${done} / ${TOTAL_ITEMS} checked off (${readDone.size} readings, ${assignDone.size} assignments/exams)`;
+  document.getElementById('progressFill').style.width = pct+'%';
+  if(!STORAGE_OK){
+    const note = document.getElementById('progressNote');
+    if(note) note.textContent = 'Heads up: this browser is blocking local storage (common in private/incognito mode) — checkboxes will still sync live via the cloud while this tab is open, but won\'t be cached locally for offline use.';
+  }
+}
+loadProgress();
+updateProgress();
+
+// Called by the Firebase listener (see the sync script near the end of the page) whenever
+// the shared database changes — from THIS device or ANY other device that has this page open.
+window.applyRemoteProgress = function(data){
+  data = data || {};
+  const rIds = data.readDone ? Object.keys(data.readDone) : [];
+  const aIds = data.assignDone ? Object.keys(data.assignDone) : [];
+  document.querySelectorAll('.chk').forEach(cb=>{ cb.checked = false; });
+  document.querySelectorAll('.item-block').forEach(b=>b.classList.remove('done'));
+  readDone.clear(); assignDone.clear();
+  rIds.forEach(idx=>{
+    readDone.add(idx);
+    const cb = document.getElementById('rchk-'+idx); if(cb) cb.checked = true;
+    const block = document.getElementById('rblock-'+idx); if(block) block.classList.add('done');
+  });
+  aIds.forEach(idx=>{
+    assignDone.add(idx);
+    const cb = document.getElementById('achk-'+idx); if(cb) cb.checked = true;
+    const block = document.getElementById('ablock-'+idx); if(block) block.classList.add('done');
+  });
+  saveProgress();
+  updateProgress();
+};
+
+const monthsToRender = [
+  {y:2026,m:7,label:'August 2026',from:16,to:31},
+  {y:2026,m:8,label:'September 2026',from:1,to:30},
+  {y:2026,m:9,label:'October 2026',from:1,to:31},
+  {y:2026,m:10,label:'November 2026',from:1,to:30},
+];
+
+const monthsDiv = document.getElementById('months');
+let totalClassDays=0, totalReadings=READINGS.length, totalAssign=ASSIGN.length;
+const classCounts = {ant214:0,ant285:0,soc301:0,soc217:0,spa201:0};
+
+monthsToRender.forEach(mo=>{
+  const wrap = document.createElement('div'); wrap.className='month';
+  const h = document.createElement('h2'); h.textContent = mo.label; wrap.appendChild(h);
+  const grid = document.createElement('div'); grid.className='grid';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{
+    const el=document.createElement('div'); el.className='dow'; el.textContent=d; grid.appendChild(el);
+  });
+  const firstOfMonth = new Date(Date.UTC(mo.y, mo.m, 1));
+  const firstDow = firstOfMonth.getUTCDay();
+  const leadIn = (mo.from===1)? firstDow : new Date(Date.UTC(mo.y,mo.m,mo.from)).getUTCDay();
+  for(let i=0;i<leadIn;i++){const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e);}
+  for(let day=mo.from; day<=mo.to; day++){
+    const dateObj = new Date(Date.UTC(mo.y,mo.m,day));
+    const dateStr = dstr(dateObj);
+    const cell = document.createElement('div'); cell.className='day';
+    if(BREAK_DAYS.includes(dateStr)){cell.classList.add('break');}
+    const dn = document.createElement('div'); dn.className='dn'; dn.textContent=day; cell.appendChild(dn);
+
+    const classesToday = classesOn(dateStr);
+    classesToday.forEach(c=>{
+      classCounts[c]++; totalClassDays++;
+      const tag=document.createElement('span'); tag.className='tag';
+      tag.style.background=COURSES[c].color; tag.textContent=COURSES[c].name;
+      cell.appendChild(tag);
+    });
+
+    const readingsToday = READINGS.filter(r=>r[0]===dateStr);
+    if(readingsToday.length){
+      const rd=document.createElement('div'); rd.className='rd';
+      rd.textContent = '📖'.repeat(readingsToday.length);
+      rd.title = readingsToday.map(r=>COURSES[r[1]].full+': '+r[2]).join(' | ');
+      cell.appendChild(rd);
+    }
+
+    const assignToday = ASSIGN.filter(a=>inRange(dateStr,a[0],a[1]));
+    if(assignToday.length){
+      cell.classList.add('assign');
+      assignToday.forEach(a=>{
+        const as=document.createElement('span'); as.className='as';
+        as.textContent = COURSES[a[2]].full+': '+a[3];
+        as.title = a[4] || '';
+        cell.appendChild(as);
+      });
+    }
+
+    const studyToday = STUDY.filter(s=>s.date===dateStr);
+    if(studyToday.length){
+      cell.classList.add('study');
+      studyToday.forEach(s=>{
+        const sb=document.createElement('div'); sb.className='sb';
+        sb.textContent = '📚 '+s.start+'–'+s.end;
+        sb.title = 'Reading block ('+s.items.length+'): '+s.items.map(it=>COURSES[it[0]].full+': '+it[1]).join(' | ');
+        cell.appendChild(sb);
+      });
+    }
+
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
+  monthsDiv.appendChild(wrap);
+});
+
+// stats
+const statsDiv = document.getElementById('stats');
+const stats = [
+  [totalClassDays, 'Total class sessions'],
+  [totalReadings, 'Mandatory readings'],
+  [totalAssign, 'Assignments / exams'],
+  [(classCounts.ant214+classCounts.ant285+classCounts.soc301+classCounts.soc217)*1.25/ (classCounts.ant214? classCounts.ant214/26:1) , '—'],
+];
+statsDiv.innerHTML = `
+  <div class="stat"><div class="num">${totalClassDays}</div><div class="lbl">Class sessions to attend</div></div>
+  <div class="stat"><div class="num">${totalReadings}</div><div class="lbl">Mandatory readings assigned</div></div>
+  <div class="stat"><div class="num">${totalAssign}</div><div class="lbl">Assignments &amp; exams due</div></div>
+  <div class="stat"><div class="num">${STUDY.length}</div><div class="lbl">Reading blocks scheduled</div></div>
+  <div class="stat"><div class="num">~13.3h</div><div class="lbl">Class contact hours / week</div></div>
+`;
+updateProgress();
+
+// --- Grade calculator ---
+// Weights confirmed from each course's syllabus grading-breakdown section.
+const GRADES = {
+  ant214: {components:[
+    {name:'Research Design Proposal', weight:20},
+    {name:'Student-led Discussion', weight:15},
+    {name:'Interview & Observation Analysis', weight:20},
+    {name:'Project Presentation', weight:15},
+    {name:'Final Research Report', weight:30},
+  ]},
+  ant285: {components:[
+    {name:'Attendance & Participation', weight:10},
+    {name:'Midterm Exam', weight:20},
+    {name:'In-Class Writing Assignments', weight:40},
+    {name:'Final Exam', weight:30},
+  ]},
+  soc301: {components:[
+    {name:'Attendance & Participation', weight:10},
+    {name:'Quiz 1', weight:20},
+    {name:'Quiz 2', weight:20},
+    {name:'Presentation', weight:15},
+    {name:'Final Exam', weight:35},
+  ]},
+  soc217: {components:[
+    {name:'Engagement', weight:15},
+    {name:'Mini-exam I', weight:15},
+    {name:'Essay Plan / Project', weight:20},
+    {name:'Mini-exam II', weight:15},
+    {name:'Final Essay (incl. presentation & discussion)', weight:35},
+  ]},
+  spa201: {components:[
+    {name:'Class Participation', weight:20},
+    {name:'Presentation', weight:20},
+    {name:'Midterm Test 1', weight:20},
+    {name:'Midterm Test 2', weight:20},
+    {name:'Oral Midterm', weight:20},
+  ]},
+};
+const LETTER_SCALE = [[95,'A'],[90,'A-'],[85,'B+'],[80,'B'],[75,'B-'],[70,'C+'],[65,'C'],[60,'C-'],[55,'D+'],[50,'D'],[0,'F']];
+function letterFor(pct){
+  for(const [min,letter] of LETTER_SCALE){ if(pct>=min) return letter; }
+  return 'F';
+}
+
+const gcGrid = document.getElementById('gcGrid');
+Object.keys(GRADES).forEach(courseKey=>{
+  const crs = COURSES[courseKey];
+  const course = GRADES[courseKey];
+  const card = document.createElement('div'); card.className='gc-card';
+  const h3 = document.createElement('h3');
+  h3.innerHTML = `<span class="crs" style="background:${crs.color}; padding:2px 7px; border-radius:5px; color:#fff; font-size:11px; margin-right:6px;">${crs.name}</span>${crs.full}`;
+  card.appendChild(h3);
+
+  const table = document.createElement('table'); table.className='gc';
+  table.innerHTML = '<tr><th>Component</th><th style="width:60px;">Weight</th><th style="width:90px;">Your score</th></tr>';
+  course.components.forEach((c,ci)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.name}</td><td class="wcol">${c.weight}%</td>`
+      + `<td class="wcol"><input type="number" class="score" min="0" max="100" step="0.1" placeholder="—" data-course="${courseKey}" data-idx="${ci}" oninput="recalcGrade('${courseKey}'); fbSaveGradeInput(this);">%</td>`;
+    table.appendChild(tr);
+  });
+  card.appendChild(table);
+
+  const summary = document.createElement('div'); summary.className='gc-summary'; summary.id='gc-summary-'+courseKey;
+  card.appendChild(summary);
+  gcGrid.appendChild(card);
+});
+
+function saveGrades(){
+  if(!STORAGE_OK) return;
+  const data = {};
+  document.querySelectorAll('input.score').forEach(input=>{
+    if(input.value!=='') data[input.dataset.course+'-'+input.dataset.idx] = input.value;
+  });
+  localStorage.setItem(LS_KEY+'_grades', JSON.stringify(data));
+}
+
+function loadGrades(){
+  if(!STORAGE_OK) return;
+  try{
+    const data = JSON.parse(localStorage.getItem(LS_KEY+'_grades') || '{}');
+    Object.keys(data).forEach(key=>{
+      const input = document.querySelector(`input.score[data-course="${key.split('-')[0]}"][data-idx="${key.split('-')[1]}"]`);
+      if(input) input.value = data[key];
+    });
+  }catch(e){ /* corrupt/old data — ignore and start fresh */ }
+}
+
+function recalcGrade(courseKey){
+  const course = GRADES[courseKey];
+  let earned = 0, enteredWeight = 0;
+  course.components.forEach((c,ci)=>{
+    const input = document.querySelector(`input[data-course="${courseKey}"][data-idx="${ci}"]`);
+    const val = parseFloat(input.value);
+    if(!isNaN(val)){
+      earned += c.weight * (val/100);
+      enteredWeight += c.weight;
+    }
+  });
+  saveGrades();
+  const remainingWeight = 100 - enteredWeight;
+  const avg = enteredWeight>0 ? (earned/enteredWeight*100) : null;
+  const minFinal = earned; // if everything ungraded scores 0
+  const maxFinal = earned + remainingWeight; // if everything ungraded scores 100
+  const summary = document.getElementById('gc-summary-'+courseKey);
+  if(avg===null){
+    summary.innerHTML = `<span style="color:var(--muted);">Enter at least one score to see your grade.</span>`;
+    renderOverall();
+    return;
+  }
+  const projected = avg; // maintaining current average across remaining weight
+  summary.innerHTML =
+    `<div><span class="grade-big">${projected.toFixed(1)}%</span><span class="letter">${letterFor(projected)}</span></div>`
+    + `<div style="margin-top:4px;">Based on ${enteredWeight}% of the course graded so far, at a ${avg.toFixed(1)}% average.</div>`
+    + (remainingWeight>0
+        ? `<div>Final could range from <b>${minFinal.toFixed(1)}%</b> (${letterFor(minFinal)}, if the rest scores 0) to <b>${maxFinal.toFixed(1)}%</b> (${letterFor(maxFinal)}, if the rest scores 100).</div>`
+        : `<div>All components entered — this is your final grade.</div>`);
+  renderOverall();
+}
+
+function renderOverall(){
+  const overall = document.getElementById('gcOverall');
+  let rows = '<tr><th>Course</th><th>Graded so far</th><th>Current average</th><th>Projected final</th></tr>';
+  Object.keys(GRADES).forEach(courseKey=>{
+    const crs = COURSES[courseKey];
+    const course = GRADES[courseKey];
+    let earned = 0, enteredWeight = 0;
+    course.components.forEach((c,ci)=>{
+      const input = document.querySelector(`input[data-course="${courseKey}"][data-idx="${ci}"]`);
+      const val = input ? parseFloat(input.value) : NaN;
+      if(!isNaN(val)){ earned += c.weight*(val/100); enteredWeight += c.weight; }
+    });
+    const avg = enteredWeight>0 ? (earned/enteredWeight*100) : null;
+    rows += `<tr><td><span class="crs" style="background:${crs.color}; padding:2px 7px; border-radius:5px; color:#fff; font-size:11px;">${crs.name}</span> ${crs.full}</td>`
+      + `<td>${enteredWeight}% of 100%</td>`
+      + `<td>${avg!==null? avg.toFixed(1)+'%' : '—'}</td>`
+      + `<td>${avg!==null? avg.toFixed(1)+'% ('+letterFor(avg)+')' : '—'}</td></tr>`;
+  });
+  overall.innerHTML = rows;
+}
+loadGrades();
+Object.keys(GRADES).forEach(recalcGrade); // instant render from local cache, before the cloud sync connects
+
+function fbSaveGradeInput(input){
+  if(window.fbSetGrade) window.fbSetGrade(input.dataset.course, input.dataset.idx, input.value); // pushes to every other open device
+}
+
+// Called by the Firebase listener whenever the shared grades change — from THIS device or any other.
+window.applyRemoteGrades = function(data){
+  data = data || {};
+  document.querySelectorAll('input.score').forEach(input=>{
+    if(document.activeElement === input) return; // don't clobber what the person is actively typing
+    const courseData = data[input.dataset.course];
+    const val = (courseData && courseData[input.dataset.idx] !== undefined) ? courseData[input.dataset.idx] : '';
+    input.value = val;
+  });
+  Object.keys(GRADES).forEach(recalcGrade);
+};
+
+// Safety net: if the Firebase module below never loads at all (blocked network, ad-blocker,
+// GitHub Pages CDN hiccup, etc.) none of its code runs — not even its own error handling —
+// so the status line would otherwise get stuck on "Connecting…" forever. Catch that here.
+setTimeout(function(){
+  if(!window.fbSetProgress){
+    const el = document.getElementById('syncStatus');
+    if(el){
+      el.textContent = '⚪ Couldn\'t reach the sync service — checkboxes/grades are only saving on this device for now.';
+      el.style.color = '#8a8290';
+    }
+  }
+}, 6000);
+</script>
+
+<!-- Live cross-device sync via Firebase Realtime Database. Loaded straight from Google's CDN —
+     no npm/build step needed, so this still works as a plain static file on GitHub Pages. -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB5b1-d2hVGH5HaaTJY2DOtLl0GtEVLaGE",
+    authDomain: "fall2026-tracker.firebaseapp.com",
+    databaseURL: "https://fall2026-tracker-default-rtdb.firebaseio.com/",
+    projectId: "fall2026-tracker",
+    storageBucket: "fall2026-tracker.firebasestorage.app",
+    messagingSenderId: "151877848816",
+    appId: "1:151877848816:web:8c65bf8b6b0c1787037c35"
+  };
+
+  function setStatus(text, color){
+    const el = document.getElementById('syncStatus');
+    if(el){ el.textContent = text; el.style.color = color; }
+  }
+
+  let db = null;
+  try{
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+  }catch(e){
+    console.error('Firebase init failed:', e);
+  }
+
+  if(!db){
+    setStatus('⚪ Cloud sync unavailable right now — checkboxes/grades will only save on this device.', '#8a8290');
+  } else {
+    // live connection indicator
+    onValue(ref(db, '.info/connected'), (snap)=>{
+      if(snap.val()===true) setStatus('🟢 Synced live — checkboxes and grades update across every device that has this page open.', '#0a9b57');
+      else setStatus('🟡 Offline — changes are saving to this device only and will sync once you\'re back online.', '#b5860a');
+    });
+
+    // pull the shared progress/grades on load, and again every time ANY device changes them
+    onValue(ref(db, 'progress'), (snap)=>{
+      if(window.applyRemoteProgress) window.applyRemoteProgress(snap.val());
+    });
+    onValue(ref(db, 'grades'), (snap)=>{
+      if(window.applyRemoteGrades) window.applyRemoteGrades(snap.val());
+    });
+
+    // exposed for the main script to call on every checkbox/input change
+    window.fbSetProgress = (kind, idx, checked)=>{
+      const path = ref(db, `progress/${kind}/${idx}`);
+      if(checked) set(path, true); else remove(path);
+    };
+    window.fbSetGrade = (courseKey, idx, value)=>{
+      const path = ref(db, `grades/${courseKey}/${idx}`);
+      if(value==='' || value===null || value===undefined) remove(path);
+      else set(path, value);
+    };
+  }
+</script>
+</body>
+</html>
