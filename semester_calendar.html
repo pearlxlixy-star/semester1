@@ -262,10 +262,15 @@ const ASSIGN = [
 ["2026-10-02","2026-10-02","ant214","Interview & Obs. Analysis — 20%","Based on 1 interview + 1 observation you conduct: initial codes, a table of themes, and ~500 words of preliminary analysis. Feedback & grade returned by Oct 12."],
 ["2026-11-09","2026-11-09","ant214","Final Research Report — 30%","The big one: 5,000 words (±10%) covering intro/question, methodology, data (5+ interviews, 5+ observations), and discussion with 3+ academic sources."],
 ["2026-11-10","2026-11-19","ant214","Project Presentations — 15%","In-class presentation of your research project, spread across regular sessions Nov 10, 12, 17 & 19. Confirm your exact presenting date with the instructor."],
+["2026-10-20","2026-10-20","ant214","Student-led Discussion — 15%","Your assigned session leading class discussion, during the regular Tue 10:30–11:45 class."],
 ["2026-10-13","2026-10-15","ant285","Midterm Exam — 20% ⚠️","Syllabus says 'Oct 13 and 15 — MIDTERM' without saying which day is the actual exam vs. review — confirm with Prof. Zanca which session it's on."],
+["2026-09-10","2026-09-10","ant285","In-Class Writing #1 — ~10%","Based on readings from Weeks 2 & 3. Weight is 40% total ÷ 4 writings, assumed equal — not stated explicitly in syllabus."],
+["2026-10-01","2026-10-01","ant285","In-Class Writing #2 — ~10%","Weight assumed equal share of the 40% In-Class Writing total (not stated explicitly)."],
+["2026-10-22","2026-10-22","ant285","In-Class Writing #3 — ~10%","Weight assumed equal share of the 40% In-Class Writing total (not stated explicitly)."],
+["2026-11-19","2026-11-19","ant285","In-Class Writing #4 — ~10%","Last one of the semester. Weight assumed equal share of the 40% In-Class Writing total (not stated explicitly)."],
 ["2026-09-03","2026-09-03","soc301","Group Presentation opt.1 — 15%","First of 3 possible presentation sessions — 'Marxism in XX century' theme. Choose one of 3 texts (Hessen, Adorno & Horkheimer, or Wright/Hochschild) to present."],
-["2026-09-24","2026-09-24","soc301","Group Presentation opt.2 — 15%","Second of 3 possible sessions — 'Weber in XX century' theme. Choose one of 3 texts (Shils, Bendix, or Starr) to present."],
-["2026-09-29","2026-09-29","soc301","Quiz 1 — 20% ⚠️","Closed-book, pen & paper, in class — no electronics. Two date conflicts in the syllabus (intro text/table say Sep 19, a Saturday; lecture outline says Sep 29) — went with Sep 29 as the plausible one."],
+["2026-09-29","2026-09-29","soc301","Group Presentation (confirmed) — 15%","'Weber in XX century' theme. Choose one of 3 texts (Shils, Bendix, or Starr) to present. Confirmed date: Sep 29 — same day as Quiz 1, resolving the earlier grading-table-vs-outline date conflict in favor of Sep 29."],
+["2026-09-29","2026-09-29","soc301","Quiz 1 — 20% ⚠️","Closed-book, pen & paper, in class — no electronics. Two date conflicts in the syllabus (intro text/table say Sep 19, a Saturday; lecture outline says Sep 29) — went with Sep 29 as the plausible one. Also the confirmed Group Presentation date, same class session."],
 ["2026-10-29","2026-10-29","soc301","Group Presentation opt.3 — 15%","Third of 3 possible sessions — 'Applying Parsons' theme. Choose one of 3 texts (Eisenstadt, Davis & Moore, or Merton) to present. You only present once, on one of the three dates."],
 ["2026-11-03","2026-11-03","soc301","Quiz 2 — 20%","Closed-book, pen & paper, in class — no electronics. Date is consistent across the whole syllabus, no conflict."],
 ["2026-11-26","2026-11-26","soc301","Final Test — 35%","Comprehensive, closed-book, closed-note, pen & paper — covers every assigned reading for the semester. The single biggest grade in this course."],
@@ -275,7 +280,7 @@ const ASSIGN = [
 ["2026-11-10","2026-11-12","soc217","Mini-exam II — 15% ⚠️","Same format as Mini-exam I. Syllabus only specifies 'Week 13' — exact day unconfirmed."],
 ["2026-11-17","2026-11-26","soc217","Presentations — 10%","In-class presentation of your group's essay findings (format of your choosing — slides, poster, video) plus a live Q&A, spread across Weeks 14–15 sessions."],
 ["2026-11-28","2026-11-28","soc217","Final Essay — 25%","Group essay, 3000–4500 words + references, building on your essay plan and presentation feedback. Due Friday 23:59 via Turnitin."],
-["2026-09-11","2026-09-12","spa201","1st Presentation — 20%","Present your assigned project topic to the class; the teacher asks follow-up questions afterward. Exact day depends on your section."],
+["2026-09-17","2026-09-17","spa201","1st Presentation (confirmed) — 20%","Present your assigned project topic to the class; the teacher asks follow-up questions afterward. Confirmed date: Sep 17."],
 ["2026-09-25","2026-09-26","spa201","1st Midterm — 20%","Covers speaking, listening, reading, writing, and grammar/vocabulary. Exact day depends on your section."],
 ["2026-11-12","2026-11-13","spa201","2nd Midterm — 20%","Same format as the 1st midterm — speaking, listening, reading, writing, grammar/vocabulary. Exact day depends on your section."],
 ["2026-11-18","2026-11-21","spa201","Oral Midterm — 20%","Oral exam covering the whole semester's content. 4-day window — exact day depends on your section."],
@@ -422,6 +427,7 @@ function loadProgress(){
     const r = JSON.parse(localStorage.getItem(LS_KEY+'_readDone') || '[]');
     const a = JSON.parse(localStorage.getItem(LS_KEY+'_assignDone') || '[]');
     r.forEach(idx=>{
+      idx = String(idx);
       readDone.add(idx);
       const cb = document.getElementById('rchk-'+idx);
       const block = document.getElementById('rblock-'+idx);
@@ -429,6 +435,7 @@ function loadProgress(){
       if(block) block.classList.add('done');
     });
     a.forEach(idx=>{
+      idx = String(idx);
       assignDone.add(idx);
       const cb = document.getElementById('achk-'+idx);
       const block = document.getElementById('ablock-'+idx);
@@ -439,6 +446,7 @@ function loadProgress(){
 }
 
 function toggleItem(kind, idx, el){
+  idx = String(idx);
   const set = kind==='read' ? readDone : assignDone;
   const blockId = (kind==='read'?'rblock-':'ablock-')+idx;
   const block = document.getElementById(blockId);
@@ -446,7 +454,9 @@ function toggleItem(kind, idx, el){
   else { set.delete(idx); block.classList.remove('done'); }
   saveProgress();
   updateProgress();
-  if(window.fbSetProgress) window.fbSetProgress(kind, idx, el.checked); // pushes to every other open device
+  // pushes an EXPLICIT true/false to the cloud (never just "delete the key") — every other
+  // device merges this in by key, so a checked/unchecked state always wins over "no info yet"
+  if(window.fbSetProgress) window.fbSetProgress(kind, idx, el.checked);
 }
 
 function updateProgress(){
@@ -464,25 +474,40 @@ updateProgress();
 
 // Called by the Firebase listener (see the sync script near the end of the page) whenever
 // the shared database changes — from THIS device or ANY other device that has this page open.
+// The cloud stores an EXPLICIT true/false for every item that's ever been toggled anywhere
+// (path: progress/read/{idx} and progress/assign/{idx} — matching what fbSetProgress writes
+// below). This function MERGES those in key-by-key instead of wiping and rebuilding the whole
+// checklist: a key that's present in the cloud always wins (so unchecking on your phone really
+// does uncheck it here too), but a key that's simply ABSENT (never synced yet, or you're
+// offline) is left exactly as it is locally. That absence-is-not-a-signal rule is what stops
+// refreshes/reconnects from ever silently erasing progress — the old version treated "cloud
+// has nothing" as "everything is unchecked", which wiped real progress on every reconnect.
 window.applyRemoteProgress = function(data){
   data = data || {};
-  const rIds = data.readDone ? Object.keys(data.readDone) : [];
-  const aIds = data.assignDone ? Object.keys(data.assignDone) : [];
-  document.querySelectorAll('.chk').forEach(cb=>{ cb.checked = false; });
-  document.querySelectorAll('.item-block').forEach(b=>b.classList.remove('done'));
-  readDone.clear(); assignDone.clear();
-  rIds.forEach(idx=>{
-    readDone.add(idx);
-    const cb = document.getElementById('rchk-'+idx); if(cb) cb.checked = true;
-    const block = document.getElementById('rblock-'+idx); if(block) block.classList.add('done');
+  const readData = data.read || {};
+  const assignData = data.assign || {};
+  Object.keys(readData).forEach(idx=>{
+    const val = readData[idx];
+    const cb = document.getElementById('rchk-'+idx);
+    const block = document.getElementById('rblock-'+idx);
+    if(val){ readDone.add(idx); if(cb) cb.checked = true; if(block) block.classList.add('done'); }
+    else { readDone.delete(idx); if(cb) cb.checked = false; if(block) block.classList.remove('done'); }
   });
-  aIds.forEach(idx=>{
-    assignDone.add(idx);
-    const cb = document.getElementById('achk-'+idx); if(cb) cb.checked = true;
-    const block = document.getElementById('ablock-'+idx); if(block) block.classList.add('done');
+  Object.keys(assignData).forEach(idx=>{
+    const val = assignData[idx];
+    const cb = document.getElementById('achk-'+idx);
+    const block = document.getElementById('ablock-'+idx);
+    if(val){ assignDone.add(idx); if(cb) cb.checked = true; if(block) block.classList.add('done'); }
+    else { assignDone.delete(idx); if(cb) cb.checked = false; if(block) block.classList.remove('done'); }
   });
   saveProgress();
   updateProgress();
+  // Anything checked locally that the cloud doesn't have a record of yet (first-ever sync,
+  // or something you checked while offline) gets pushed up so it becomes the shared state.
+  if(window.fbSetProgress){
+    readDone.forEach(idx=>{ if(!(idx in readData)) window.fbSetProgress('read', idx, true); });
+    assignDone.forEach(idx=>{ if(!(idx in assignData)) window.fbSetProgress('assign', idx, true); });
+  }
 };
 
 const monthsToRender = [
@@ -588,7 +613,10 @@ const GRADES = {
   ant285: {components:[
     {name:'Attendance & Participation', weight:10},
     {name:'Midterm Exam', weight:20},
-    {name:'In-Class Writing Assignments', weight:40},
+    {name:'In-Class Writing #1 (Sep 10)', weight:10},
+    {name:'In-Class Writing #2 (Oct 1)', weight:10},
+    {name:'In-Class Writing #3 (Oct 22)', weight:10},
+    {name:'In-Class Writing #4 (Nov 19)', weight:10},
     {name:'Final Exam', weight:30},
   ]},
   soc301: {components:[
@@ -723,15 +751,27 @@ function fbSaveGradeInput(input){
 }
 
 // Called by the Firebase listener whenever the shared grades change — from THIS device or any other.
+// Same merge rule as applyRemoteProgress: a score the cloud actually has always wins (so it
+// really does show up on your other devices), but a field the cloud has no record of yet is
+// left alone rather than blanked out — so an empty/not-yet-synced cloud never erases a score
+// you already typed in here.
 window.applyRemoteGrades = function(data){
   data = data || {};
   document.querySelectorAll('input.score').forEach(input=>{
     if(document.activeElement === input) return; // don't clobber what the person is actively typing
     const courseData = data[input.dataset.course];
-    const val = (courseData && courseData[input.dataset.idx] !== undefined) ? courseData[input.dataset.idx] : '';
-    input.value = val;
+    if(!courseData || courseData[input.dataset.idx] === undefined) return; // cloud has nothing here yet — leave local value alone
+    input.value = courseData[input.dataset.idx];
   });
   Object.keys(GRADES).forEach(recalcGrade);
+  // push up any locally-entered scores the cloud doesn't have a record of yet
+  if(window.fbSetGrade){
+    document.querySelectorAll('input.score').forEach(input=>{
+      const courseData = data[input.dataset.course];
+      const cloudHasIt = courseData && courseData[input.dataset.idx] !== undefined;
+      if(!cloudHasIt && input.value !== '') window.fbSetGrade(input.dataset.course, input.dataset.idx, input.value);
+    });
+  }
 };
 
 // Safety net: if the Firebase module below never loads at all (blocked network, ad-blocker,
@@ -794,15 +834,23 @@ setTimeout(function(){
       if(window.applyRemoteGrades) window.applyRemoteGrades(snap.val());
     });
 
-    // exposed for the main script to call on every checkbox/input change
+    function reportWriteError(err){
+      console.error('Sync write failed:', err);
+      setStatus('🔴 Cloud sync error — your changes are saved on this device but did NOT reach the shared database (' + (err && err.message ? err.message : err) + ').', '#c53030');
+    }
+
+    // exposed for the main script to call on every checkbox/input change.
+    // Always writes an EXPLICIT true/false (never deletes the key) — the merge logic in
+    // applyRemoteProgress relies on "key present" meaning "we know this item's real state",
+    // so an unchecked box has to be recorded as false, not just removed.
     window.fbSetProgress = (kind, idx, checked)=>{
       const path = ref(db, `progress/${kind}/${idx}`);
-      if(checked) set(path, true); else remove(path);
+      set(path, checked).catch(reportWriteError);
     };
     window.fbSetGrade = (courseKey, idx, value)=>{
       const path = ref(db, `grades/${courseKey}/${idx}`);
-      if(value==='' || value===null || value===undefined) remove(path);
-      else set(path, value);
+      const op = (value==='' || value===null || value===undefined) ? remove(path) : set(path, value);
+      op.catch(reportWriteError);
     };
   }
 </script>
